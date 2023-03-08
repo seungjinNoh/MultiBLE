@@ -3,40 +3,43 @@ package com.example.multible.view
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.databinding.DataBindingUtil
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
+import com.example.multible.R
 import com.example.multible.databinding.ItemScanBinding
 import com.polidea.rxandroidble2.scan.ScanResult
 
-class ScanAdapter : ListAdapter<ScanResult, ScanAdapter.ScanViewHolder>(diffUtil) {
-    var scanList = listOf<ScanResult>()
+class ScanAdapter(
+    private val itemClicked: (ScanResult) -> Unit
+): ListAdapter<ScanResult, ScanAdapter.ScanViewHolder>(diffUtil) {
 
     class ScanViewHolder(
         private val binding: ItemScanBinding
     ) : RecyclerView.ViewHolder(binding.root) {
+
         fun bind(scanResult: ScanResult) {
             binding.name.text = scanResult.bleDevice.name
             binding.address.text = scanResult.bleDevice.macAddress
         }
+
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ScanViewHolder {
-        return ScanViewHolder(
-            ItemScanBinding.inflate(
-                LayoutInflater.from(parent.context),
-                parent,
-                false
-            )
-        )
+        val layoutInflater = LayoutInflater.from(parent.context)
+        val binding = DataBindingUtil.inflate<ItemScanBinding>(layoutInflater, R.layout.item_scan, parent, false)
+
+        return ScanViewHolder(binding).apply {
+            binding.connect.setOnClickListener {
+                val position = adapterPosition
+                itemClicked(getItem(position))
+            }
+        }
     }
 
     override fun onBindViewHolder(holder: ScanViewHolder, position: Int) {
         holder.bind(getItem(position))
-    }
-
-    fun setList(list: List<ScanResult>) {
-        this.scanList = list
     }
 
     companion object {

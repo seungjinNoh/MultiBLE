@@ -14,11 +14,18 @@ import com.example.multible.base.BaseViewModel
 import com.example.multible.databinding.ActivityMainBinding
 import com.example.multible.viewmodel.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import timber.log.Timber
 
 @AndroidEntryPoint
 class MainActivity : BaseActivity<ActivityMainBinding, BaseViewModel>(R.layout.activity_main) {
 
     override val viewModel: MainViewModel by viewModels()
+    private val scanAdapter: ScanAdapter by lazy {
+        ScanAdapter { scanResult ->
+            Timber.d("아이템 클릭 scanResult.bleDevice: ${scanResult.bleDevice}")
+            //TODO ViewModel에 연결 메소드에 ScanResult.bleDevice 넘기기
+        }
+    }
 
     companion object {
         val PERMISSIONS = arrayOf(
@@ -40,6 +47,7 @@ class MainActivity : BaseActivity<ActivityMainBinding, BaseViewModel>(R.layout.a
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding.viewmodel = viewModel
+        binding.adapter = scanAdapter
         checkVersion()
     }
 
@@ -72,9 +80,7 @@ class MainActivity : BaseActivity<ActivityMainBinding, BaseViewModel>(R.layout.a
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        //when (requestCode) {
-        //REQUEST_LOCATION_PERMISSION -> {
-        // If request is cancelled, the result arrays are empty.
+
         if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             Toast.makeText(this, "Permissions granted!", Toast.LENGTH_SHORT).show()
         } else {
@@ -82,8 +88,6 @@ class MainActivity : BaseActivity<ActivityMainBinding, BaseViewModel>(R.layout.a
             Toast.makeText(this, "Permissions must be granted!", Toast.LENGTH_SHORT).show()
             finish()
         }
-        // }
-        //}
     }
 
 }
