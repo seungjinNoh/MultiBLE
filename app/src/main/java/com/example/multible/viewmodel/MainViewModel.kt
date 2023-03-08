@@ -1,5 +1,7 @@
 package com.example.multible.viewmodel
 
+import androidx.databinding.ObservableArrayList
+import androidx.databinding.ObservableArrayMap
 import androidx.databinding.ObservableBoolean
 import androidx.lifecycle.viewModelScope
 import com.example.domain.usecase.ScanDevicesUseCase
@@ -28,7 +30,7 @@ class MainViewModel @Inject constructor(
 
 
     private var scanSubscription: Disposable? = null
-    var scanResults = HashMap<String, ScanResult>()
+    var scanResults = ObservableArrayMap<String, ScanResult>()
 
     val isScanning = ObservableBoolean(false)
 
@@ -36,10 +38,12 @@ class MainViewModel @Inject constructor(
     val eventFlow = _eventFlow.asSharedFlow()
 
     fun startScan() {
+        Timber.d("*")
         val settings: ScanSettings = ScanSettings.Builder().build()
         val scanFilter: ScanFilter = ScanFilter.Builder().build()
 
-        scanResults = HashMap<String, ScanResult>()
+        scanResults.clear()
+
         isScanning.set(true)
 
         scanSubscription =
@@ -62,18 +66,20 @@ class MainViewModel @Inject constructor(
     }
 
     fun stopScan() {
+        Timber.d("*")
         scanSubscription?.dispose()
         isScanning.set(false)
-        if (scanResults.isEmpty()) {
-            event(Event.ScanListUpdate(scanResults))
-        }
+//        if (scanResults.isEmpty()) {
+//            event(Event.ScanListUpdate(scanResults))
+//        }
     }
 
     private fun addScanResult(result: ScanResult) {
+        Timber.d("result: $result")
         val device = result.bleDevice
         val deviceAddress = device.macAddress
         scanResults[deviceAddress] = result
-
+        Timber.d("scanResult.size: ${scanResults.size}")
     }
 
     private fun event(event: Event) {
