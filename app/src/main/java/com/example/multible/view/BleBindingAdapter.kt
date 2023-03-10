@@ -26,7 +26,6 @@ object BleBindingAdapter {
     @JvmStatic
     @BindingAdapter("scanList")
     fun RecyclerView.bindScanList(scanList: ObservableArrayMap<String, ScanResult>) {
-        Timber.d("scanList: ${scanList.size}")
         val adapter = this.adapter
         if (adapter is ScanAdapter) {
             adapter.submitList(scanList.values.toList())

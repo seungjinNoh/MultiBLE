@@ -1,12 +1,16 @@
 package com.example.multible.viewmodel
 
-import androidx.databinding.ObservableArrayList
 import androidx.databinding.ObservableArrayMap
 import androidx.databinding.ObservableBoolean
 import androidx.lifecycle.viewModelScope
+import com.example.domain.usecase.ConnectDeviceUseCase
+import com.example.domain.usecase.DeviceConnectionEventUseCase
+import com.example.domain.usecase.DisconnectDeviceUseCase
 import com.example.domain.usecase.ScanDevicesUseCase
+import com.example.domain.usecase.TestUseCase
+import com.example.domain.util.DeviceEvent
 import com.example.multible.base.BaseViewModel
-import com.polidea.rxandroidble2.exceptions.BleException
+import com.polidea.rxandroidble2.RxBleDevice
 import com.polidea.rxandroidble2.exceptions.BleScanException
 import com.polidea.rxandroidble2.scan.ScanFilter
 import com.polidea.rxandroidble2.scan.ScanResult
@@ -15,8 +19,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
@@ -25,14 +28,22 @@ import kotlin.concurrent.schedule
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val scanDevicesUseCase: ScanDevicesUseCase
+    private val scanDevicesUseCase: ScanDevicesUseCase,
+    private val connectDeviceUseCase: ConnectDeviceUseCase,
+    private val disconnectDeviceUseCase: DisconnectDeviceUseCase,
+    deviceConnectionEventUseCase: DeviceConnectionEventUseCase,
+    testUseCase: TestUseCase
 ) : BaseViewModel() {
-
 
     private var scanSubscription: Disposable? = null
     var scanResults = ObservableArrayMap<String, ScanResult>()
-
     val isScanning = ObservableBoolean(false)
+
+    val deviceConnectionEvent: SharedFlow<DeviceEvent<Boolean>> =
+        deviceConnectionEventUseCase.execute().asSharedFlow()
+
+    val testEvent: SharedFlow<String> =
+        testUseCase.execute().asSharedFlow()
 
     private val _eventFlow = MutableSharedFlow<Event>()
     val eventFlow = _eventFlow.asSharedFlow()
@@ -74,13 +85,17 @@ class MainViewModel @Inject constructor(
 //        }
     }
 
+    fun connectDevice(device: RxBleDevice) = connectDeviceUseCase.execute(device)
+
     private fun addScanResult(result: ScanResult) {
-        Timber.d("result: $result")
+//        Timber.d("result: $result")
         val device = result.bleDevice
         val deviceAddress = device.macAddress
         scanResults[deviceAddress] = result
-        Timber.d("scanResult.size: ${scanResults.size}")
+//        Timber.d("scanResult.size: ${scanResults.size}")
     }
+
+
 
     private fun event(event: Event) {
         viewModelScope.launch {
